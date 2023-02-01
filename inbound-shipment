@@ -1,0 +1,86 @@
+from sp_api.base import Marketplaces
+from sp_api.base import Granularity, ReportType, ProcessingStatus
+from sp_api.api import FulfillmentInbound
+
+
+credentials = dict(
+    refresh_token='refresh token',
+    lwa_app_id='client identifier',
+    # From Seller Central, named CLIENT IDENTIFIER on website.
+    lwa_client_secret='client secret',
+    # From Seller Central, named CLIENT SECRET on website.
+    aws_access_key='aws access key',  # From AWS IAM Setup
+    aws_secret_key='aws secrey key',  # From AWS IAM Setup
+    role_arn='role arn'  # arn:aws:iam::1234567890:role/SellingPartnerAPIRole
+)
+
+
+
+
+#item list for case:
+#{"SellerSKU": "MY-SKU", "ASIN": "B00XXXXXX", "Condition": "NewItem", "Quantity": 10, "QuantityInCase": 10}
+#item list for single unit:
+#{"SellerSKU": "MY-SKU", "ASIN": "B00XXXXXX", "Condition": "NewItem", "Quantity": 1}
+#item list qith prep innstructions:
+#{"SellerSKU": "MY-SKU", "ASIN": "B00XXXXXX", "Condition": "NewItem", "Quantity": 10, "QuantityInCase": 10,"PrepDetailsList": [{"PrepInstruction": "Labeling","PrepOwner": "SELLER"}]}
+#If you receive this error: "{'code': 'InvalidInput', 'message': 'Invalid Request creating FNSkuMap', 'details': ''}" it means the sku you entered doesn't match the ASIN
+
+res = FulfillmentInbound(credentials=credentials).plans({
+        "ShipFromAddress": {
+            "Name": "MyStore",
+            "AddressLine1": "100 some Street",
+            "AddressLine2": "",
+            "DistrictOrCounty":  "",
+            "City": "City",
+            "StateOrProvinceCode": "NY",
+            "CountryCode": "US",
+            "PostalCode": "10000"
+        },
+        "LabelPrepPreference": "SELLER_LABEL",
+        "InboundShipmentPlanRequestItems": [
+{"SellerSKU": "My-SKU1", "ASIN": "B000XXXXX", "Condition": "NewItem", "Quantity": 300, "QuantityInCase": 150},
+{"SellerSKU": "My-SKU2", "ASIN": "B00YYYYYY", "Condition": "NewItem", "Quantity": 10, "QuantityInCase": 10},
+]
+    })
+
+
+
+for inbound in res.payload['InboundShipmentPlans']:
+    shipment_id = inbound['ShipmentId']
+    inbound_shipment_items = []
+    for item in inbound['Items']:
+	    inbound_shipment_item = {"ShipmentId": shipment_id,
+        "SellerSKU": item['SellerSKU'],
+        "FulfillmentNetworkSKU": item['FulfillmentNetworkSKU'],
+        "QuantityShipped": item['Quantity'],
+        "QuantityReceived": item['Quantity'],
+        "QuantityInCase": item['Quantity'],
+        "ReleaseDate": "2020-04-23"}
+	    inbound_shipment_items.append(inbound_shipment_item)
+
+    res2 = FulfillmentInbound(credentials=credentials).create_shipment(shipment_id, {
+        "InboundShipmentHeader": {
+            "ShipmentName": shipment_id,
+            "ShipFromAddress": {
+            "Name": "MyStore",
+            "AddressLine1": "100 some Street",
+            "AddressLine2": "",
+            "DistrictOrCounty":  "",
+            "City": "City",
+            "StateOrProvinceCode": "NY",
+            "CountryCode": "US",
+            "PostalCode": "10000"
+            },
+            "DestinationFulfillmentCenterId": inbound['DestinationFulfillmentCenterId'],
+            "AreCasesRequired": True,
+            "ShipmentStatus": "WORKING",
+            "LabelPrepPreference": "SELLER_LABEL",
+            "IntendedBoxContentsSource": "NONE"
+        },
+        "InboundShipmentItems": inbound_shipment_items,
+        "MarketplaceId": "ATVPDKIKX0DER"
+    })
+    print (res2.payload)
+
+
+

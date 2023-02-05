@@ -1,0 +1,18 @@
+from sp_api.base import Marketplaces
+from sp_api.api import Catalog
+
+
+
+credentials = dict(
+    refresh_token='refresh token',
+    lwa_app_id='client identifier',
+    # From Seller Central, named CLIENT IDENTIFIER on website.
+    lwa_client_secret='client secret',
+    # From Seller Central, named CLIENT SECRET on website.
+    aws_access_key='aws access key',  # From AWS IAM Setup
+    aws_secret_key='aws secrey key',  # From AWS IAM Setup
+    role_arn='role arn'  # arn:aws:iam::1234567890:role/SellingPartnerAPIRole
+)
+
+res = CatalogItems(credentials=credentials).get_catalog_item(marketplaceIds='ATVPDKIKX0DER',asin='B083LY9SMS',includedData='identifiers')
+print (res)

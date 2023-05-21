@@ -14,5 +14,5 @@ credentials = dict(
     role_arn='role arn'  # arn:aws:iam::1234567890:role/SellingPartnerAPIRole
 )
 
-res = CatalogItems(credentials=credentials).get_catalog_item(marketplaceIds='ATVPDKIKX0DER',asin='B083LY9SMS',includedData='identifiers')
+res = CatalogItems(credentials=credentials).get_catalog_item(marketplaceIds='ATVPDKIKX0DER',asin='B083LY9SMS',includedData='attributes')
 print (res)
